@@ -13,7 +13,7 @@ class PTZ_Camera(object):
         self._pan_speed_range = [.7, 100] # in degrees / second
         self._focal_length_range = [7.1e-3, 210e-3] # in m; smaller means larger fov (less zoom)
         self._resolution = [1920, 1080] # 1920x1080p though this is adjustable
-        self._max_range = .2  #300 * 12 * .0254 # max range 300 ft converted to meters; ## car should be within this range AND in view to be tracked #TODO: undo this temp value
+        self._max_range = 2  #300 * 12 * .0254 # max range 300 ft converted to meters; ## car should be within this range AND in view to be tracked #TODO: undo this temp value
         self._pxsz = 2.9e-6 # in meters; pixel size of the image sensor
         self._hfov_range = [2.5,59.2] # in degrees
         self._vfov_range = [1.4,34.6] # in degrees; bigger corresponds to smaller focal length
@@ -53,15 +53,29 @@ class PTZ_Camera(object):
         
         # now plot the fov cone
         
-        # self.hfov = np.deg2rad(59.2)
-        # self.vfov = np.deg2rad(34.6)
+        self.hfov = np.deg2rad(59.2)
+        self.vfov = np.deg2rad(34.6)
         
         
-        # r1 = self.RCI.T @ rotation_matrix(self.hfov/2,np.array([1,0,0])) @ rotation_matrix(self.vfov/2,np.array([0,1,0])) @ np.array([0,0,self._max_range])
-        # rI1 = self.position + r1
-        # print(rI1)
-        # x1,y1,z1 = rI1
-        # ax.plot([x,x1],[y,y1], [z, z1], "--")
+        r1 = self.RCI.T @ rotation_matrix(self.hfov/2,np.array([1,0,0])) @ rotation_matrix(self.vfov/2,np.array([0,1,0])) @ np.array([0,0,self._max_range])
+        rI1 = self.position + r1
+        x1,y1,z1 = rI1
+        ax.plot([x,x1],[y,y1], [z, z1], "m--")
+        
+        r1 = self.RCI.T @ rotation_matrix(-self.hfov/2,np.array([1,0,0])) @ rotation_matrix(self.vfov/2,np.array([0,1,0])) @ np.array([0,0,self._max_range])
+        rI1 = self.position + r1
+        x1,y1,z1 = rI1
+        ax.plot([x,x1],[y,y1], [z, z1], "m--")
+        
+        r1 = self.RCI.T @ rotation_matrix(-self.hfov/2,np.array([1,0,0])) @ rotation_matrix(-self.vfov/2,np.array([0,1,0])) @ np.array([0,0,self._max_range])
+        rI1 = self.position + r1
+        x1,y1,z1 = rI1
+        ax.plot([x,x1],[y,y1], [z, z1], "m--")
+        
+        r1 = self.RCI.T @ rotation_matrix(self.hfov/2,np.array([1,0,0])) @ rotation_matrix(-self.vfov/2,np.array([0,1,0])) @ np.array([0,0,self._max_range])
+        rI1 = self.position + r1
+        x1,y1,z1 = rI1
+        ax.plot([x,x1],[y,y1], [z, z1], "m--")
         
         
         return

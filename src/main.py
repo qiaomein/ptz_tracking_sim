@@ -1,3 +1,6 @@
+#%matplotlib widget
+# uncomment above for jupyter integration
+
 import numpy as np
 from matplotlib import pyplot as plt
 import matplotlib.animation as animation
@@ -6,11 +9,9 @@ from ptz_sim import PTZ_Sim
 from ptz_cam import PTZ_Camera
 
 
-
-
 if __name__ == "__main__":
     sr = 10
-    T = 1 # in seconds
+    T = 10 # in seconds
     e0 = np.array([np.pi/2,0,0]) # 3-1-2 representation; z axis is pointing towards imageplane
     cam = PTZ_Camera(np.array([0, 1.3, .5]), e0) # specify position and orientation
     sim = PTZ_Sim(T,sr)  
@@ -66,7 +67,6 @@ if __name__ == "__main__":
         interval=20, blit=False
     )
     
-    #plt.show()
-    ani.save('animation_drawing.gif', writer="pillow", fps=40)
     
-    print("Animation saved!")
+    # ani.save('animation_drawing.gif', writer="pillow", fps=40)
+    # print("Animation saved!")
