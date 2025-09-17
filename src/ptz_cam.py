@@ -3,16 +3,21 @@ import numpy as np
 
 class PTZ_Camera(object):
     # for the 30x model
-    def __init__(self, pos):
-        # camera parameters
+    def __init__(self, pos, euler):
+        # camera parameters from https://ptzoptics.imagerelay.com/share/PT-4K-xx-G3-Data-Sheet
         self.position = pos
         self._fps = 60
         self._tilt_range = [-30, 90] # in degrees
         self._pan_range = [-170, 170] # in degrees
         self._tilt_speed_range = [.7, 69.9] # in degrees / second
         self._pan_speed_range = [.7, 100] # in degrees / second
-        self._focal_length_range = [7.1, 210] # in mm; smaller means larger fov (less zoom)
+        self._focal_length_range = [7.1e-3, 210e-3] # in m; smaller means larger fov (less zoom)
         self._resolution = [1920, 1080] # 1920x1080p though this is adjustable
+        self._max_range = .2  #300 * 12 * .0254 # max range 300 ft converted to meters; ## car should be within this range AND in view to be tracked #TODO: undo this temp value
+        self._pxsz = 2.9e-6 # in meters; pixel size of the image sensor
+        self._hfov_range = [2.5,59.2] # in degrees
+        self._vfov_range = [1.4,34.6] # in degrees; bigger corresponds to smaller focal length
+        self.detector_size = find_detector_size([self._hfov_range[-1],self._vfov_range[-1]],self._pxsz,self._focal_length_range[0])
         ### system modeling
         
         self._command_latency = 50 # in ms; how long it takes for the ptz to being moving after receiving command
@@ -21,6 +26,9 @@ class PTZ_Camera(object):
         self._pan_J = 1e-3 
         self._tilt_J = 1e-3 # in SI units for rotational inertia
         self.mass = 1.47 # in kg
+        
+        self._euler = euler # use 3-1-2 representation
+        self.RCI = euler2dcm(euler)
         
         # camera intrinsics/extrinsics for P matrix
         
@@ -33,8 +41,79 @@ class PTZ_Camera(object):
         ax.plot(x,y,z, "mo")
         ax.plot([x,x],[y,y], [0, z], "m")
         
+        # plot camera axes: red,x;blue,y;yellow z
+        rinc = self.RCI.T @ np.array([1,0,0])
+        ax.plot([x,x+rinc[0]],[y,y+rinc[1]],[z,z+rinc[2]],'r')
+        
+        rinc = self.RCI.T @ np.array([0,1,0])
+        ax.plot([x,x+rinc[0]],[y,y+rinc[1]],[z,z+rinc[2]],'b')
+        
+        rinc = self.RCI.T @ np.array([0,0,1])
+        ax.plot([x,x+rinc[0]],[y,y+rinc[1]],[z,z+rinc[2]],'y')
+        
         # now plot the fov cone
+        
+        # self.hfov = np.deg2rad(59.2)
+        # self.vfov = np.deg2rad(34.6)
+        
+        
+        # r1 = self.RCI.T @ rotation_matrix(self.hfov/2,np.array([1,0,0])) @ rotation_matrix(self.vfov/2,np.array([0,1,0])) @ np.array([0,0,self._max_range])
+        # rI1 = self.position + r1
+        # print(rI1)
+        # x1,y1,z1 = rI1
+        # ax.plot([x,x1],[y,y1], [z, z1], "--")
+        
         
         return
     
+### general functions below
+
+def crossProductEq(u):
+    assert len(u) == 3
+    u1,u2,u3 = u.reshape(3) # so wack how i need this line smh
+    uCross = np.array([[0, -u3, u2],[u3, 0, -u1],[-u2, u1, 0]])
+    return uCross
+
+def rotation_matrix(phi, ahat):
+    # direct implementation of euler 
+    ahat = ahat.reshape(3,1)
+    R = np.cos(phi) * np.eye(3) + (1-np.cos(phi)) * (ahat @ ahat.T) - np.sin(phi) * crossProductEq(ahat)
+
+    return R
+
+def euler2dcm(e):
+    """_summary_
+    Let the world (W) and body (B) reference frames be initially aligned.  In a
+    3-1-2 order, rotate B away from W by angles psi (yaw, about the body Z
+    axis), phi (roll, about the body X axis), and theta (pitch, about the body Y
+    axis).  R_BW can then be used to cast a vector expressed in W coordinates as
+    a vector in B coordinates: vB = R_BW * vW
     
+        Args:
+        e (_type_): _description_
+
+    Returns:
+        _type_: _description_
+        
+        
+    """
+    
+    a1 = np.array([0, 0, 1])
+    a2 = np.array([1, 0, 0])
+    a3 = np.array([0,1,0])
+    
+    phi,theta,psi = e
+    
+    RBW = rotation_matrix(theta,a3) @ rotation_matrix(phi,a2) @ rotation_matrix(psi,a1)
+    return RBW
+    
+
+def find_detector_size(hvfov,pxsz,f): # hvfov is [hfov,vfov] in degrees
+    # based on this: https://www.phase1vision.com/userfiles/product_files/imx485lqj_lqj1_flyer.pdf
+    # https://wavelength-oe.com/optical-calculators/field-of-view/
+    
+    # returns w,h of image sensor dimensions
+    hfov,vfov = hvfov
+    ds = np.array([2*f* np.tan(np.deg2rad(hfov)/2), 2*f* np.tan(np.deg2rad(vfov)/2)])
+    print ("Camera image sensor is ", ds, np.linalg.norm(ds))
+    return ds
