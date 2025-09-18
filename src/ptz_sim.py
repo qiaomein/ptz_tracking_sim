@@ -39,7 +39,7 @@ class PTZ_Sim(object):
 
         r1,r2,r3,r4 = cam.fov_rays # these are in C frame
         
-        # TODO: orient normal vectors in right order
+        # ensure all nvecs are pointed towards inside of fov pyramid
         n1 = np.cross(r1,r2)
         n2 = np.cross(r2,r3)
         n3 = np.cross(r3,r4)
@@ -74,13 +74,6 @@ class PTZ_Sim(object):
         
         x,y,z = self.trajectory.T
     
-        # Initialization function
-        def init():
-            line.set_data([], [])
-            line.set_3d_properties([])
-            point.set_data([], [])
-            point.set_3d_properties([])
-            return line, point
 
         # Update function
         def update(frame):
@@ -100,7 +93,7 @@ class PTZ_Sim(object):
 
         # Animate
         ani = animation.FuncAnimation(
-            fig, update, frames=len(x), init_func=init,
+            fig, update, frames=len(x),
             interval=20, blit=False
         )
         

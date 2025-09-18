@@ -12,12 +12,12 @@ class PTZ_Camera(object):
         self._tilt_speed_range = [.7, 69.9] # in degrees / second
         self._pan_speed_range = [.7, 100] # in degrees / second
         self._focal_length_range = [7.1e-3, 210e-3] # in m; smaller means larger fov (less zoom)
-        self._resolution = [1920, 1080] # 1920x1080p though this is adjustable
+        self.resolution = [1920, 1080] # 1920x1080p though this is adjustable; u,v
         self._max_range = 3  #300 * 12 * .0254 # max range 300 ft converted to meters; ## car should be within this range AND in view to be tracked #TODO: undo this temp value
-        self._pxsz = 2.9e-6 # in meters; pixel size of the image sensor
+        self.pxsz = 2.9e-6 # in meters; pixel size of the image sensor
         self._hfov_range = [2.5,59.2] # in degrees
         self._vfov_range = [1.4,34.6] # in degrees; bigger corresponds to smaller focal length
-        self.detector_size = find_detector_size([self._hfov_range[-1],self._vfov_range[-1]],self._pxsz,self._focal_length_range[0])
+        self.detector_size = find_detector_size([self._hfov_range[-1],self._vfov_range[-1]],self.pxsz,self._focal_length_range[0])
         ### system modeling
         
         self._command_latency = 50 # in ms; how long it takes for the ptz to being moving after receiving command
@@ -30,6 +30,7 @@ class PTZ_Camera(object):
         self._euler = euler # use 3-1-2 representation
         self.hfov = np.deg2rad(self._hfov_range[-1])
         self.vfov = np.deg2rad(self._vfov_range[-1])
+        self.focal_length = self._focal_length_range[0]
         
         
         self.RCI = euler2dcm(euler)
@@ -42,6 +43,13 @@ class PTZ_Camera(object):
         self.fov_rays = [r1,r2,r3,r4] # in the C frame
         
         # camera intrinsics/extrinsics for P matrix
+        
+        fpix = self.focal_length / self.pxsz
+        u0,v0 = np.array(self.resolution) / 2
+        self.K = np.array([[fpix,0,-u0],[0,fpix,-v0],[0,0,1]])
+        #E = np.concat((self.RCI,self.position.reshape((3,1))),axis=1)
+        #self.P = K @ E # the projection matrix to multiply by homogenous inertial coordinate
+        #print('\n\n',K,E)
         
         
         
