@@ -13,10 +13,14 @@ class PTZ_Sim(object):
         
         self.N = np.size(self.tvector)
         self.trajectory = np.zeros((self.N,3)) # inspo: https://mathworld.wolfram.com/LissajousCurve.html
-        self.trajectory[:,0] = .75*np.cos(3*self.tvector) + np.random.normal(0,.02,self.N)
-        self.trajectory[:,1] = .5*np.sin(self.tvector) + np.random.normal(0,.02,self.N)
+        # self.trajectory[:,0] = .75*np.cos(3*self.tvector) + np.random.normal(0,.02,self.N)
+        # self.trajectory[:,1] = .5*np.sin(self.tvector) + np.random.normal(0,.02,self.N)
         
-        self.detected = [False] * self.N
+        self.trajectory[:,0] = .75*np.cos(self.tvector) + np.random.normal(0,.02,self.N)
+        self.trajectory[:,1] = .75*np.sin(self.tvector) + np.random.normal(0,.02,self.N)
+        
+        self.cam_history_3D = [None] * self.N # track all detected points
+        self.cam_history_2D = np.zeros((self.N,2)) # track what the camera sees
         
         self._nvecs = None
         
@@ -61,18 +65,26 @@ class PTZ_Sim(object):
         for k in range(self.N):
             currtime = self.tvector[k]
             if self.is_detected(k,cam):
-                self.detected[k] = self.trajectory[k]
+                self.cam_history_3D[k] = self.trajectory[k]
+                
+                camcoord = cam.K @ ((cam.RCI @ (self.trajectory[k]-cam.position)))
+                camcoord /= camcoord[-1]
+                u,v = camcoord[0],camcoord[1]
+                self.cam_history_2D[k] = np.array([u,v])
                 
         return
     
         
-    def animate(self,fig,ax, save = True):
+    def animate(self,fig,ax, cam_ax, save = True):
         # plots timehistory; all data is generated before, this function just animates/replays it
         # Plot elements: line for path, point for particle
+        
         line, = ax.plot([], [], [], lw=2, color="blue", ls = ':')
         point, = ax.plot([], [], [], "ro")
+        point_c, = cam_ax.plot([], [], "ro")
         
         x,y,z = self.trajectory.T
+        
     
 
         # Update function
@@ -89,7 +101,12 @@ class PTZ_Sim(object):
             point.set_data([x[frame]], [y[frame]])
             point.set_3d_properties([z[frame]])
             
-            return line, point
+            # update cam view
+            u,v = self.cam_history_2D[frame]
+            if u != 0 and v !=0:
+                point_c.set_data([u],[v])
+            
+            return line, point, point_c
 
         # Animate
         ani = animation.FuncAnimation(
@@ -102,6 +119,7 @@ class PTZ_Sim(object):
             print("Animation saved!")
         
         return ani
+    
     
     def get_fov_nvecs(self):
         return self._nvecs

@@ -14,30 +14,30 @@ if __name__ == "__main__":
     ## set simulation parameters here
     sr = 10
     T = 7 # in seconds
-    e0 = np.array([np.pi*7/8,0,0]) # 3-1-2 representation; z axis is pointing towards imageplane
-    cam = PTZ_Camera(np.array([0, 0,2]), e0) # specify position and orientation
+    e0 = np.array([np.pi/2+np.pi/8,np.pi/5,0]) # 3-1-2 representation; z axis is pointing towards imageplane
+    cam = PTZ_Camera(np.array([0, 1.7,1]), e0) # specify position and orientation
     sim = PTZ_Sim(T,sr)  
-    m1 = -2
-    m2 = 2
+    m2 = 1.5
+    m1 = -m2
 
     ## set up figure for 3d sim
     fig = plt.figure(figsize=(7,7))
-    ax = fig.add_subplot(111, projection="3d")
+    ax = fig.add_subplot(211, projection="3d")
     ax.set_xlim([m1,m2])
     ax.set_ylim([m1,m2])
-    ax.set_zlim([0,3])
+    ax.set_zlim([0,2])
     ax.set_xlabel('x')
     ax.set_ylabel('y')
     ax.set_aspect('equal')
     ## now setup figure for camera view
-    cfig, axc = plt.subplots()
+    axc = fig.add_subplot(212)
     axc.set_title("Camera Display")
     axc.set_aspect('equal')
+    axc.set_xlabel('u [pixels]')
+    axc.set_ylabel('v [pixels]')
     
     # axc.set_xlim([0,cam.resolution[0]])
     # axc.set_ylim([0,cam.resolution[1]])
-    # axc.set_xlim([-1e4,1e4])
-    # axc.set_ylim([-1e4,1e4])
     
     # run the simulation
     sim.run(cam)
@@ -54,15 +54,15 @@ if __name__ == "__main__":
     #     ax.plot([x0,x1],[y0,y1],[z0,z1],'r--')
     
     # plot all detected points
-    for dp in sim.detected:
+    for dp in sim.cam_history_3D:
         
-        if dp is not False:
-            ax.plot3D(dp[0],dp[1],dp[2],'go',markersize = 3)
-            camcoord = cam.K @ ((cam.RCI @ dp) - cam.position)
-            print(camcoord[-1])
+        if dp is not None:
+            ax.plot3D(dp[0],dp[1],dp[2],'go',markersize = 2.5)
+            
+            camcoord = cam.K @ ((cam.RCI @ (dp-cam.position)))
             camcoord /= camcoord[-1]
             u,v = camcoord[0],camcoord[1]
-            axc.plot(u,v,'ro')
+            axc.plot(u,v,'go',markersize = 2)
     
     
     
@@ -71,6 +71,6 @@ if __name__ == "__main__":
     cam.plot_init(ax)
     sim.plot_init(ax)
 
-    ani = sim.animate(fig,ax, save = False)
+    ani = sim.animate(fig,ax,axc, save = False)
     
 
