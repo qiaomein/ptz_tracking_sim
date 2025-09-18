@@ -12,9 +12,9 @@ class PTZ_Sim(object):
         self.tvector = np.arange(0,T, 1/self.sample_rate)
         
         self.N = np.size(self.tvector)
-        self.trajectory = np.zeros((self.N,3))
-        self.trajectory[:,0] = np.cos(self.tvector) + np.random.normal(0,.05,self.N)
-        self.trajectory[:,1] = .5*np.sin(self.tvector) + np.random.normal(0,.05,self.N)
+        self.trajectory = np.zeros((self.N,3)) # inspo: https://mathworld.wolfram.com/LissajousCurve.html
+        self.trajectory[:,0] = 1.5*np.cos(3*self.tvector) + np.random.normal(0,.02,self.N)
+        self.trajectory[:,1] = 1*np.sin(self.tvector) + np.random.normal(0,.02,self.N)
         
         self.detected = [False] * self.N
         
@@ -66,7 +66,7 @@ class PTZ_Sim(object):
         return
     
         
-    def animate(self,fig,ax):
+    def animate(self,fig,ax, save = True):
         # plots timehistory; all data is generated before, this function just animates/replays it
         # Plot elements: line for path, point for particle
         line, = ax.plot([], [], [], lw=2, color="blue", ls = ':')
@@ -103,6 +103,10 @@ class PTZ_Sim(object):
             fig, update, frames=len(x), init_func=init,
             interval=20, blit=False
         )
+        
+        if save:
+            ani.save("..//ptz_sim.gif", writer="pillow", fps=40)
+            print("Animation saved!")
         
         return ani
     

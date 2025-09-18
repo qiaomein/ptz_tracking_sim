@@ -12,9 +12,9 @@ from ptz_cam import PTZ_Camera
 if __name__ == "__main__":
     ## set simulation parameters here
     sr = 10
-    T = 10 # in seconds
+    T = 12 # in seconds
     e0 = np.array([np.pi/2,0,0]) # 3-1-2 representation; z axis is pointing towards imageplane
-    cam = PTZ_Camera(np.array([0, 1.3, .5]), e0) # specify position and orientation
+    cam = PTZ_Camera(np.array([0, 1.7, .5]), e0) # specify position and orientation
     sim = PTZ_Sim(T,sr)  
     m1 = -2
     m2 = 2
@@ -45,13 +45,12 @@ if __name__ == "__main__":
     
     
     # now animate the sim
-    cam.plot_init(ax,cframe=False)
+    cam.plot_init(ax)
     sim.plot_init(ax)
 
-    ani = sim.animate(fig,ax)
+    ani = sim.animate(fig,ax, save = True)
     
     
     
     
-    # ani.save('animation_drawing.gif', writer="pillow", fps=40)
-    # print("Animation saved!")
+    
