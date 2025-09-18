@@ -13,7 +13,7 @@ if __name__ == "__main__":
     ## set simulation parameters here
     sr = 10
     T = 12 # in seconds
-    e0 = np.array([np.pi/2,0,0]) # 3-1-2 representation; z axis is pointing towards imageplane
+    e0 = np.array([np.pi/2+np.pi/16,0,0]) # 3-1-2 representation; z axis is pointing towards imageplane
     cam = PTZ_Camera(np.array([0, 1.7, .5]), e0) # specify position and orientation
     sim = PTZ_Sim(T,sr)  
     m1 = -2
@@ -24,6 +24,7 @@ if __name__ == "__main__":
     ax = fig.add_subplot(111, projection="3d")
     ax.set_xlim([m1,m2])
     ax.set_ylim([m1,m2])
+    ax.set_zlim([0,3])
     ax.set_xlabel('x')
     ax.set_ylabel('y')
     ax.set_aspect('equal')
@@ -36,10 +37,11 @@ if __name__ == "__main__":
     #     x0,y0,z0 = cam.position
     #     ax.plot([x0,x1],[y0,y1],[z0,z1],'r--')
     
+    # plot all detected points
     for dp in sim.detected:
         
         if dp is not False:
-            ax.plot3D(dp[0],dp[1],dp[2],'go')
+            ax.plot3D(dp[0],dp[1],dp[2],'go',markersize = 3)
     
     
     
@@ -48,7 +50,7 @@ if __name__ == "__main__":
     cam.plot_init(ax)
     sim.plot_init(ax)
 
-    ani = sim.animate(fig,ax, save = True)
+    ani = sim.animate(fig,ax, save = False)
     
     
     

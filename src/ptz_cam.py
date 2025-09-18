@@ -57,13 +57,13 @@ class PTZ_Camera(object):
         # plot camera axes: red,x;blue,y;yellow z
         if cframe:
             rinc = self.RCI.T @ np.array([1,0,0])
-            ax.plot([x,x+rinc[0]],[y,y+rinc[1]],[z,z+rinc[2]],'r')
+            ax.plot([x,x+rinc[0]],[y,y+rinc[1]],[z,z+rinc[2]],'r', linewidth = .3)
             
             rinc = self.RCI.T @ np.array([0,1,0])
-            ax.plot([x,x+rinc[0]],[y,y+rinc[1]],[z,z+rinc[2]],'b')
+            ax.plot([x,x+rinc[0]],[y,y+rinc[1]],[z,z+rinc[2]],'b', linewidth = .3)
             
             rinc = self.RCI.T @ np.array([0,0,1])
-            ax.plot([x,x+rinc[0]],[y,y+rinc[1]],[z,z+rinc[2]],'y')
+            ax.plot([x,x+rinc[0]],[y,y+rinc[1]],[z,z+rinc[2]],'y', linewidth = .3)
         
         # now plot the fov cone
         
