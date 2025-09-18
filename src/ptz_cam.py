@@ -46,7 +46,7 @@ class PTZ_Camera(object):
         
         fpix = self.focal_length / self.pxsz
         u0,v0 = np.array(self.resolution) / 2
-        self.K = np.array([[fpix,0,-u0],[0,fpix,-v0],[0,0,1]])
+        self.K = np.array([[fpix,0,u0],[0,fpix,v0],[0,0,1]])
         #E = np.concat((self.RCI,self.position.reshape((3,1))),axis=1)
         #self.P = K @ E # the projection matrix to multiply by homogenous inertial coordinate
         #print('\n\n',K,E)

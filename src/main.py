@@ -13,9 +13,9 @@ from ptz_cam import PTZ_Camera
 if __name__ == "__main__":
     ## set simulation parameters here
     sr = 10
-    T = 12 # in seconds
-    e0 = np.array([np.pi/2+np.pi/16,0,0]) # 3-1-2 representation; z axis is pointing towards imageplane
-    cam = PTZ_Camera(np.array([0, 1.7, .5]), e0) # specify position and orientation
+    T = 7 # in seconds
+    e0 = np.array([np.pi*7/8,0,0]) # 3-1-2 representation; z axis is pointing towards imageplane
+    cam = PTZ_Camera(np.array([0, 0,2]), e0) # specify position and orientation
     sim = PTZ_Sim(T,sr)  
     m1 = -2
     m2 = 2
@@ -32,9 +32,12 @@ if __name__ == "__main__":
     ## now setup figure for camera view
     cfig, axc = plt.subplots()
     axc.set_title("Camera Display")
+    axc.set_aspect('equal')
     
     # axc.set_xlim([0,cam.resolution[0]])
     # axc.set_ylim([0,cam.resolution[1]])
+    # axc.set_xlim([-1e4,1e4])
+    # axc.set_ylim([-1e4,1e4])
     
     # run the simulation
     sim.run(cam)
@@ -70,3 +73,4 @@ if __name__ == "__main__":
 
     ani = sim.animate(fig,ax, save = False)
     
+

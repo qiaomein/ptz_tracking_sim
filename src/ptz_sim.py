@@ -13,8 +13,8 @@ class PTZ_Sim(object):
         
         self.N = np.size(self.tvector)
         self.trajectory = np.zeros((self.N,3)) # inspo: https://mathworld.wolfram.com/LissajousCurve.html
-        self.trajectory[:,0] = 1.5*np.cos(3*self.tvector) + np.random.normal(0,.02,self.N)
-        self.trajectory[:,1] = 1*np.sin(self.tvector) + np.random.normal(0,.02,self.N)
+        self.trajectory[:,0] = .75*np.cos(3*self.tvector) + np.random.normal(0,.02,self.N)
+        self.trajectory[:,1] = .5*np.sin(self.tvector) + np.random.normal(0,.02,self.N)
         
         self.detected = [False] * self.N
         
