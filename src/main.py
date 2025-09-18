@@ -1,4 +1,4 @@
-#%matplotlib widget
+%matplotlib widget
 # uncomment above for jupyter integration
 
 import numpy as np
@@ -10,6 +10,7 @@ from ptz_cam import PTZ_Camera
 
 
 if __name__ == "__main__":
+    ## set simulation parameters here
     sr = 10
     T = 10 # in seconds
     e0 = np.array([np.pi/2,0,0]) # 3-1-2 representation; z axis is pointing towards imageplane
@@ -18,7 +19,7 @@ if __name__ == "__main__":
     m1 = -2
     m2 = 2
 
-    # Set up figure and 3D axis
+    ## set up figure and 3D axis
     fig = plt.figure()
     ax = fig.add_subplot(111, projection="3d")
     ax.set_xlim([m1,m2])
@@ -26,46 +27,22 @@ if __name__ == "__main__":
     ax.set_xlabel('x')
     ax.set_ylabel('y')
     ax.set_aspect('equal')
+    ##
     
+    sim.run(cam)
     
-    x,y,z = sim.trajectory.T
+    for dp in sim.detected:
+        
+        if dp is not False:
+            ax.plot3D(dp[0],dp[1],dp[2],'go')
     
-   
-    # Plot elements: line for path, point for particle
-    line, = ax.plot([], [], [], lw=2, color="blue", ls = ':')
-    point, = ax.plot([], [], [], "ro")
+    # now animate the sim
     cam.plot_init(ax)
     sim.plot_init(ax)
+
+    ani = sim.animate(fig,ax)
     
     
-    # Initialization function
-    def init():
-        line.set_data([], [])
-        line.set_3d_properties([])
-        point.set_data([], [])
-        point.set_3d_properties([])
-        return line, point
-
-    # Update function
-    def update(frame):
-        
-        ax.set_title(f"Time: {round(sim.tvector[frame],2)} seconds")
-        
-        # Up to current frame
-        line.set_data(x[:frame], y[:frame])
-        line.set_3d_properties(z[:frame])
-
-        # Current particle position
-        point.set_data([x[frame]], [y[frame]])
-        point.set_3d_properties([z[frame]])
-        
-        return line, point
-
-    # Animate
-    ani = animation.FuncAnimation(
-        fig, update, frames=len(x), init_func=init,
-        interval=20, blit=False
-    )
     
     
     # ani.save('animation_drawing.gif', writer="pillow", fps=40)
