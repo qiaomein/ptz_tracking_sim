@@ -31,17 +31,15 @@ class PTZ_Camera(object):
         self.hfov = np.deg2rad(self._hfov_range[-1])
         self.vfov = np.deg2rad(self._vfov_range[-1])
         
-        self.hfov = np.deg2rad(60)
-        self.vfov = np.deg2rad(170)
         
         self.RCI = euler2dcm(euler)
         
-        r1 = self.RCI.T @ rotation_matrix(self.vfov/2,np.array([1,0,0])) @ rotation_matrix(self.hfov/2,np.array([0,1,0])) @ np.array([0,0,self._max_range])
-        r2 = self.RCI.T @ rotation_matrix(-self.vfov/2,np.array([1,0,0])) @ rotation_matrix(self.hfov/2,np.array([0,1,0])) @ np.array([0,0,self._max_range])
-        r3 = self.RCI.T @ rotation_matrix(-self.vfov/2,np.array([1,0,0])) @ rotation_matrix(-self.hfov/2,np.array([0,1,0])) @ np.array([0,0,self._max_range])
-        r4 = self.RCI.T @ rotation_matrix(self.vfov/2,np.array([1,0,0])) @ rotation_matrix(-self.hfov/2,np.array([0,1,0])) @ np.array([0,0,self._max_range])
+        r1 = rotation_matrix(self.vfov/2,np.array([1,0,0])) @ rotation_matrix(self.hfov/2,np.array([0,1,0])) @ np.array([0,0,self._max_range])
+        r2 = rotation_matrix(-self.vfov/2,np.array([1,0,0])) @ rotation_matrix(self.hfov/2,np.array([0,1,0])) @ np.array([0,0,self._max_range])
+        r3 = rotation_matrix(-self.vfov/2,np.array([1,0,0])) @ rotation_matrix(-self.hfov/2,np.array([0,1,0])) @ np.array([0,0,self._max_range])
+        r4 = rotation_matrix(self.vfov/2,np.array([1,0,0])) @ rotation_matrix(-self.hfov/2,np.array([0,1,0])) @ np.array([0,0,self._max_range])
 
-        self.fov_rays = [r1,r2,r3,r4] # in C frame
+        self.fov_rays = [r1,r2,r3,r4] # in the C frame
         
         # camera intrinsics/extrinsics for P matrix
         
@@ -50,42 +48,30 @@ class PTZ_Camera(object):
         
         return
         
-    def plot_init(self,ax):
+    def plot_init(self,ax, cframe = True):
         # plot the camera position + pole
         x,y,z = self.position
         ax.plot(x,y,z, "mo")
         ax.plot([x,x],[y,y], [0, z], "m")
         
         # plot camera axes: red,x;blue,y;yellow z
-        rinc = self.RCI.T @ np.array([1,0,0])
-        ax.plot([x,x+rinc[0]],[y,y+rinc[1]],[z,z+rinc[2]],'r')
-        
-        rinc = self.RCI.T @ np.array([0,1,0])
-        ax.plot([x,x+rinc[0]],[y,y+rinc[1]],[z,z+rinc[2]],'b')
-        
-        rinc = self.RCI.T @ np.array([0,0,1])
-        ax.plot([x,x+rinc[0]],[y,y+rinc[1]],[z,z+rinc[2]],'y')
+        if cframe:
+            rinc = self.RCI.T @ np.array([1,0,0])
+            ax.plot([x,x+rinc[0]],[y,y+rinc[1]],[z,z+rinc[2]],'r')
+            
+            rinc = self.RCI.T @ np.array([0,1,0])
+            ax.plot([x,x+rinc[0]],[y,y+rinc[1]],[z,z+rinc[2]],'b')
+            
+            rinc = self.RCI.T @ np.array([0,0,1])
+            ax.plot([x,x+rinc[0]],[y,y+rinc[1]],[z,z+rinc[2]],'y')
         
         # now plot the fov cone
         
         
-        r1,r2,r3,r4 = self.fov_rays
-        
-        rI1 = self.position + r1
-        x1,y1,z1 = rI1
-        ax.plot([x,x1],[y,y1], [z, z1], "m--")
-        
-        rI1 = self.position + r2
-        x1,y1,z1 = rI1
-        ax.plot([x,x1],[y,y1], [z, z1], "m--")
-        
-        rI1 = self.position + r3
-        x1,y1,z1 = rI1
-        ax.plot([x,x1],[y,y1], [z, z1], "m--")
-        
-        rI1 = self.position + r4
-        x1,y1,z1 = rI1
-        ax.plot([x,x1],[y,y1], [z, z1], "m--")
+        for ri in self.fov_rays:
+            rI1 = self.position + self.RCI.T @ ri
+            x1,y1,z1 = rI1
+            ax.plot([x,x1],[y,y1], [z, z1], "m--")
         
         
         return

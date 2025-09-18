@@ -31,13 +31,21 @@ if __name__ == "__main__":
     
     sim.run(cam)
     
+    # for nvec in sim.get_fov_nvecs():
+    #     x1,y1,z1 = cam.RCI.T @ nvec + cam.position
+    #     x0,y0,z0 = cam.position
+    #     ax.plot([x0,x1],[y0,y1],[z0,z1],'r--')
+    
     for dp in sim.detected:
         
         if dp is not False:
             ax.plot3D(dp[0],dp[1],dp[2],'go')
     
+    
+    
+    
     # now animate the sim
-    cam.plot_init(ax)
+    cam.plot_init(ax,cframe=False)
     sim.plot_init(ax)
 
     ani = sim.animate(fig,ax)

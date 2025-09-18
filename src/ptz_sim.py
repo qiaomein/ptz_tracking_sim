@@ -13,10 +13,12 @@ class PTZ_Sim(object):
         
         self.N = np.size(self.tvector)
         self.trajectory = np.zeros((self.N,3))
-        self.trajectory[:,0] = .5*np.cos(self.tvector) + np.random.normal(0,.05,self.N)
+        self.trajectory[:,0] = np.cos(self.tvector) + np.random.normal(0,.05,self.N)
         self.trajectory[:,1] = .5*np.sin(self.tvector) + np.random.normal(0,.05,self.N)
         
         self.detected = [False] * self.N
+        
+        self._nvecs = None
         
     def plot_init(self,ax):
         # plot global frame axes
@@ -33,15 +35,18 @@ class PTZ_Sim(object):
             cam (PTZ_Camera): _description_
         """
         c0 = cam.position
-        carpos = self.trajectory[i,:]
+        carpos = cam.RCI @ (self.trajectory[i,:] - c0) # expressed in camera frame
 
-        r1,r2,r3,r4 = cam.fov_rays
+        r1,r2,r3,r4 = cam.fov_rays # these are in C frame
+        
+        # TODO: orient normal vectors in right order
         n1 = np.cross(r1,r2)
         n2 = np.cross(r2,r3)
         n3 = np.cross(r3,r4)
         n4 = np.cross(r4,r1)
         
         nvecs = [n1,n2,n3,n4]
+        self._nvecs = nvecs
         
         for nvec in nvecs:
             if np.dot(nvec,carpos) <=0:
@@ -59,6 +64,7 @@ class PTZ_Sim(object):
                 self.detected[k] = self.trajectory[k]
                 
         return
+    
         
     def animate(self,fig,ax):
         # plots timehistory; all data is generated before, this function just animates/replays it
@@ -100,3 +106,5 @@ class PTZ_Sim(object):
         
         return ani
     
+    def get_fov_nvecs(self):
+        return self._nvecs
