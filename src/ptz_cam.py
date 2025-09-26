@@ -13,7 +13,7 @@ class PTZ_Camera(object):
         self._pan_speed_range = [.7, 100] # in degrees / second
         self._focal_length_range = [7.1e-3, 210e-3] # in m; smaller means larger fov (less zoom)
         self.resolution = [1920, 1080] # 1920x1080p though this is adjustable; u,v
-        self._max_range = 3  #300 * 12 * .0254 # max range 300 ft converted to meters; ## car should be within this range AND in view to be tracked #TODO: undo this temp value
+        self._max_range = 300 * 12 * .0254 # max range 300 ft converted to meters; ## car should be within this range AND in view to be tracked #TODO: undo this temp value
         self.pxsz = 2.9e-6 # in meters; pixel size of the image sensor
         self._hfov_range = [2.5,59.2] # in degrees
         self._vfov_range = [1.4,34.6] # in degrees; bigger corresponds to smaller focal length
@@ -31,6 +31,7 @@ class PTZ_Camera(object):
         self.hfov = np.deg2rad(self._hfov_range[-1])
         self.vfov = np.deg2rad(self._vfov_range[-1])
         self.focal_length = self._focal_length_range[0]
+        self.gamma= 0 #1000
         
         
         self.RCI = euler2dcm(euler)
@@ -44,12 +45,15 @@ class PTZ_Camera(object):
         
         # camera intrinsics/extrinsics for P matrix
         
-        fpix = self.focal_length / self.pxsz
-        u0,v0 = np.array(self.resolution) / 2
-        self.K = np.array([[-fpix,0,u0],[0,fpix,v0],[0,0,1]])
+        fpix = self.focal_length / self.pxsz 
+        u0,v0 = np.array(self.resolution) / 2 # shift image origin away from principal axis
+        self.K = np.array([[-fpix,self.gamma,u0],[0,fpix,v0],[0,0,1]])
         #E = np.concat((self.RCI,self.position.reshape((3,1))),axis=1)
         #self.P = K @ E # the projection matrix to multiply by homogenous inertial coordinate
         #print('\n\n',K,E)
+        # easy explanation here: https://www.youtube.com/watch?v=Hz8kz5aeQ44
+        # or this one: https://www.cs.cmu.edu/~16385/s17/Slides/11.1_Camera_matrix.pdf
+        
         
         
         
@@ -125,7 +129,6 @@ def euler2dcm(e):
     RBW = rotation_matrix(theta,a3) @ rotation_matrix(phi,a2) @ rotation_matrix(psi,a1)
     return RBW
     
-
 def find_detector_size(hvfov,pxsz,f): # hvfov is [hfov,vfov] in degrees
     # based on this: https://www.phase1vision.com/userfiles/product_files/imx485lqj_lqj1_flyer.pdf
     # https://wavelength-oe.com/optical-calculators/field-of-view/
@@ -133,5 +136,5 @@ def find_detector_size(hvfov,pxsz,f): # hvfov is [hfov,vfov] in degrees
     # returns w,h of image sensor dimensions
     hfov,vfov = hvfov
     ds = np.array([2*f* np.tan(np.deg2rad(hfov)/2), 2*f* np.tan(np.deg2rad(vfov)/2)])
-    print ("Camera image sensor is ", ds, np.linalg.norm(ds))
+    #print ("Camera image sensor is ", ds, np.linalg.norm(ds))
     return ds

@@ -1,13 +1,14 @@
 # main sim file
-
+import pandas as pd
 import numpy as np
 import matplotlib.pyplot as plt
 import matplotlib.animation as animation
 
 
+
 class PTZ_Sim(object):
-    def __init__(self, T, sr = 30):
-        self.sample_rate = sr # in hz
+    def __init__(self, T, trajectory_file = None, sampling_rate = 30):
+        self.sample_rate = sampling_rate # in hz
         self.simTime = T # in seconds
         self.tvector = np.arange(0,T, 1/self.sample_rate)
         
@@ -16,8 +17,30 @@ class PTZ_Sim(object):
         # self.trajectory[:,0] = .75*np.cos(3*self.tvector) + np.random.normal(0,.02,self.N)
         # self.trajectory[:,1] = .5*np.sin(self.tvector) + np.random.normal(0,.02,self.N)
         
-        self.trajectory[:,0] = .75*np.cos(self.tvector) + np.random.normal(0,.02,self.N)
-        self.trajectory[:,1] = .75*np.sin(self.tvector) + np.random.normal(0,.02,self.N)
+        if trajectory_file is None:
+            self.trajectory[:,0] = .75*np.cos(self.tvector) + np.random.normal(0,.02,self.N)
+            self.trajectory[:,1] = .75*np.sin(self.tvector) + np.random.normal(0,.02,self.N)
+        else:
+            print(f"{trajectory_file} found. Overriding sampling rate...")
+            ct = pd.read_csv(trajectory_file)
+            # look at car 0
+            ct = ct[ct['car_id'] == 0]
+            ctx,ctz,cty = ct.x.to_numpy(), -ct.y.to_numpy(), -ct.z.to_numpy()
+            self.tvector = ct.timestamp.to_numpy()
+            self.tvector -= self.tvector[0]
+            
+            
+            dti = 20
+            self.tvector = self.tvector[::dti]
+            self.N = np.size(self.tvector)
+            self.trajectory = np.zeros((self.N,3))
+            self.trajectory[:,0] = ctx[::dti]
+            self.trajectory[:,1] = cty[::dti]
+            self.trajectory[:,2] = ctz[::dti]
+            
+            
+            
+            
         
         self.cam_history_3D = [None] * self.N # track all detected points
         self.cam_history_2D = np.zeros((self.N,2)) # track what the camera sees
@@ -29,8 +52,14 @@ class PTZ_Sim(object):
         ax.plot([0,1],[0,0],[0,0],'r')
         ax.plot([0,0],[0,1],[0,0],'b')
         ax.plot([0,0],[0,0],[0,1],'y')
-        ax.plot([0],[0],[0],'ro')
+        ax.plot([0],[0],[0],'ro', markersize=1)
         
+        # plot track
+        side_l = pd.read_csv('..//data//side_l.csv', header=None, names=['x', 'y', 'z', 'dist'])
+        side_r = pd.read_csv('..//data//side_r.csv', header=None, names=['x', 'y', 'z', 'dist'])
+        
+        ax.plot(side_l['x'], side_l['z'], -side_l['y'], 'gray', linewidth=1, label='Track')
+        ax.plot(side_r['x'], side_r['z'], -side_r['y'],'gray', linewidth=1)
     def is_detected(self,i,cam):
         """_summary_
 
@@ -72,6 +101,9 @@ class PTZ_Sim(object):
                 u,v = camcoord[0],camcoord[1]
                 self.cam_history_2D[k] = np.array([u,v])
                 
+                
+                
+                
         return
     
         
@@ -80,8 +112,8 @@ class PTZ_Sim(object):
         # Plot elements: line for path, point for particle
         
         line, = ax.plot([], [], [], lw=2, color="blue", ls = ':')
-        point, = ax.plot([], [], [], "ro")
-        point_c, = cam_ax.plot([], [], "ro")
+        point, = ax.plot([], [], [], "ko", markersize = 7)
+        point_c, = cam_ax.plot([], [], "ro") 
         
         x,y,z = self.trajectory.T
         

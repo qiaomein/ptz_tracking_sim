@@ -1,0 +1,1 @@
+Simulate a PTZ camera tracking a moving object
