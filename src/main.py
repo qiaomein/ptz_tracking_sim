@@ -14,7 +14,7 @@ if __name__ == "__main__":
     ## set simulation parameters here
     sr = 1/33e-3
     T = 7 # in seconds
-    e0 = np.array([np.pi/2+np.pi/16,0,0]) # 3-1-2 representation; z axis is pointing towards imageplane
+    e0 = np.array([np.pi/2,0,0]) # 3-1-2 representation; z axis is pointing towards imageplane
     cam = PTZ_Camera(np.array([0, -200, 60]), e0) # specify position and orientation
     sim = PTZ_Sim(T,trajectory_file="..//data//all_car_positions.csv", sampling_rate = sr)  
     m2 = 400
